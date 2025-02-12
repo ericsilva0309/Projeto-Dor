@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Status das Tasks do Flowhub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        #tasks-table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+
+        #tasks-table th, #tasks-table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #tasks-table th {
+            background-color: #6ea0d7;
+            color: white;
+        }
+
+        .status-running-now {
+            background-color: rgb(176, 232, 176);
+            color: white;
+            font-weight: bold;
+        }
+
+        .status-running {
+            background-color: green;
+            color: white;
+            font-weight: bold;
+        }
+
+        .status-failed {
+            background-color: red;
+            color: white;
+            font-weight: bold;
+        }
+
+        .status-stopped {
+            background-color: white;
+            color: black;
+            font-weight: bold;
+        }
+
+        #update-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #update-button:hover {
+            background-color: #0056b3;
+        }
+
+        button {
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Status das Tasks Flowhub</h1>
+    <button id="update-button" onclick="fetchTasks()">Atualizar Status</button>
+    <table id="tasks-table">
+        <thead>
+            <tr>
+                <th>Tasks</th>
+                <th>Status</th>
+                <th>Conexão</th>
+                <th>Ação</th>
+                <th>Step function</th>
+            </tr>
+        </thead>
+        <tbody id="tasks-body"></tbody>
+    </table>
+
+<script>
+    const lambdaStatusUrl = 'https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/status';
+    const testConnectionLambdaUrl = 'https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/test-connection';
+    const stepFunctionUrl = 'https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/invoke';
+    const glueUrl = 'https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/gluedatabase';
+    
+ 
+
+
+
+
+    async function fetchTasks() {
+    try {
+        const response = await fetch(lambdaStatusUrl);
+        const data = await response.json();
+        let tasks = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+
+        const tasksBody = document.getElementById('tasks-body');
+        tasksBody.innerHTML = '';
+
+        tasks.forEach(task => {
+            const row = document.createElement('tr');
+            const taskIdentifier = document.createElement('td');
+            taskIdentifier.textContent = task.TaskIdentifier;
+
+            const status = document.createElement('td');
+            status.textContent = task.Status;
+
+            if (task.Status === 'running' && task.MigrationProgress === 100) {
+                status.classList.add('status-running');
+            } else if (task.Status === 'failed') {
+                status.classList.add('status-failed');
+            } else if (task.Status === 'running') {
+                status.classList.add('status-running-now');
+            }
+       
+
+
+            // Botão de Conexão
+            const connectionButtonCell = document.createElement('td');
+            const connectionButton = document.createElement('button');
+            connectionButton.textContent = 'Conexão';
+            connectionButton.onclick = () => testConnection(task, connectionButton, restartButton, task.Status);
+
+            updateConnectionButtonStyle(connectionButton, task.Status);
+            connectionButtonCell.appendChild(connectionButton);
+
+            // Botão de Ação (Restart)
+            const actionButtonCell = document.createElement('td');
+            const restartButton = document.createElement('button');
+            restartButton.textContent = 'Restart';
+            restartButton.disabled = true;
+            restartButton.onclick = () => invokeStepFunction(task.TaskIdentifier, stepFunctionStatus);
+
+            updateRestartButtonState(task, connectionButton, restartButton, task.Status);
+            
+            const stepFunctionStatus = document.createElement('td');
+            stepFunctionStatus.textContent = "Não acionada";
+            stepFunctionStatus.dataset.taskIdentifier = task.TaskIdentifier;
+
+            actionButtonCell.appendChild(restartButton);
+            row.appendChild(taskIdentifier);
+            row.appendChild(status);
+            row.appendChild(connectionButtonCell);
+            row.appendChild(actionButtonCell);
+            row.appendChild(stepFunctionStatus);
+
+            tasksBody.appendChild(row);
+        });
+    } catch (error) {
+        alert('Erro ao buscar as tasks.');
+    }
+}
+
+
+function updateRestartButtonState(task, connectionButton, restartButton, status) {
+        // Obtemos a cor do botão de conexão corretamente usando `getComputedStyle`
+        const connectionColor = window.getComputedStyle(connectionButton).backgroundColor;
+    
+        console.log(`Task: ${task.TaskIdentifier}, Status: ${task.Status}, Cor do Botão de Conexão: ${connectionColor}`);
+    
+        // Converte a cor para um formato padronizado e verifica corretamente
+        const isGreen = connectionColor === "rgb(0, 128, 0)" || connectionColor === "green";
+        const isRed = connectionColor === "rgb(255, 0, 0)" || connectionColor === "red";
+    
+        // Verifica se o botão de restart deve ser ativado
+        if ((task.Status === 'failed') && isGreen) {
+            restartButton.disabled = false; // Ativa o botão de restart
+        } else {
+            restartButton.disabled = true; // Mantém o botão desativado
+        }
+    
+        console.log(`Botão Restart ${restartButton.disabled ? "desativado" : "ativado"}`);
+    }
+
+
+function updateConnectionButtonStyle(button, status) {
+    if (status === 'running') {
+        button.style.backgroundColor = 'green';
+        button.style.color = 'white';
+    } else {
+        button.style.backgroundColor = ''; // Sem cor personalizada
+        button.style.color = 'black';
+    }
+}
+
+async function testConnection(task, connectionButton, restartButton, status) {
+    try {
+        console.log("Iniciando teste de conexão...");
+
+        const taskResponse = await fetch("https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/get-task-details", {
+            method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ taskIdentifier: task.TaskIdentifier })
+        });
+
+        if (!taskResponse.ok) throw new Error("Erro ao obter detalhes da task.");
+
+        const taskData = await taskResponse.json();
+        const taskArn = taskData.ReplicationInstanceArn;
+        const endpointArn = taskData.SourceEndpointArn || taskData.TargetEndpointArn;
+
+        if (!taskArn || !endpointArn) throw new Error("Erro: ARN não encontrados.");
+
+        const payload = { action: "start-test", task_arn: taskArn, endpoint_arn: endpointArn };
+
+        const response = await fetch(testConnectionLambdaUrl, {
+            method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error("Erro ao iniciar o teste.");
+        
+        connectionButton.disabled = true;
+
+        console.log("Teste iniciado. Verificando status...");
+
+        await checkConnectionStatus(task, taskArn, endpointArn, connectionButton, restartButton, status);
+        connectionButton.disabled = false;
+
+    } catch (error) {
+        alert(error.message);
+        console.error(error);
+    }
+}
+
+async function checkConnectionStatus(task, taskArn, endpointArn, connectionButton, restartButton, statusTask) {
+    document.querySelectorAll("connectionButton").forEach(btn => btn.disabled = true);
+    document.querySelectorAll("restartButton").forEach(btn => btn.disabled = true);
+
+    console.log(`teste1 : ${statusTask}`)
+
+    let status = "testing";
+    while (status === "testing") {
+        await new Promise(resolve => setTimeout(resolve, 10000)); // Aguarda 10s
+
+        const response = await fetch(testConnectionLambdaUrl, {
+            method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "check-test", task_arn: taskArn, endpoint_arn: endpointArn })
+        });
+
+        const result = await response.json();
+        status = result.status;
+        console.log(`Status atual: ${status}`);
+    }
+
+    alert(`Teste finalizado: ${status}`);
+
+    // Atualiza a cor do botão com base no resultado do teste de conexão
+    if (status === "successful" && (statusTask === "ready" || statusTask === "failed")) { 
+        connectionButton.style.backgroundColor = "green";
+        connectionButton.style.color = "white";
+        restartButton.disabled = false;
+    } else if (status === "failed") {
+        connectionButton.style.backgroundColor = "red";
+        connectionButton.style.color = "white";
+    } else if (status === "successful" && statusTask === "running") {
+        connectionButton.style.backgroundColor = "green";
+        connectionButton.style.color = "white";
+    }
+
+
+    document.querySelectorAll("connectionButton").forEach(btn => btn.disabled = false);
+    
+    
+}
+
+
+    
+
+
+    async function fetchDatabases() {
+        try {
+            const response = await fetch(glueUrl);
+            const data = await response.json();
+            let parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+            let databases = parsedBody.databases;
+
+            const content = document.getElementById('content');
+            content.innerHTML = '<h1 style="text-align:center;">Bases do Glue</h1>';
+
+            const list = document.createElement('div');
+            list.style.textAlign = 'center';
+
+            databases.forEach(db => {
+                const button = document.createElement('button');
+                button.textContent = db;
+                button.style.margin = '10px';
+                button.style.padding = '10px 20px';
+                button.style.fontSize = '16px';
+                button.style.cursor = 'pointer';
+                button.style.backgroundColor = '#007bff';
+                button.style.color = 'white';
+                button.onclick = () => alert(`Você selecionou a base: ${db}`);
+
+                list.appendChild(button);
+            });
+
+            content.appendChild(list);
+        } catch (error) {
+            alert('Erro ao buscar as databases do Glue.');
+        }
+    }
+
+
+
+    async function invokeStepFunction(taskIdentifier, stepFunctionCell) {
+    const payload = { task_identifier: taskIdentifier };
+    try {
+        const response = await fetch(stepFunctionUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        
+        stepFunctionCell.textContent = 'Executando';
+        stepFunctionCell.dataset.executionArn = data.executionArn;
+    } catch (error) {
+        alert('Erro ao invocar a Step Function.');
+    }
+}
+
+async function checkStepFunctionStatus() {
+    document.querySelectorAll('#tasks-body tr').forEach(async row => {
+        const stepFunctionCell = row.cells[4];
+        if (!stepFunctionCell.dataset.executionArn) return;
+
+        try {
+            const response = await fetch(stepFunctionUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ executionArn: stepFunctionCell.dataset.executionArn })
+            });
+            
+            const data = await response.json();
+            if (data.status) {
+                stepFunctionCell.textContent = data.status;
+            }
+        } catch (error) {
+            console.error('Erro ao verificar status da Step Function:', error);
+        }
+    });
+}
+
+    setInterval(checkStepFunctionStatus, 10000);
+
+    window.onload = fetchTasks;
+</script>
+</body>
+</html>
