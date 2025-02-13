@@ -326,18 +326,21 @@ function App() {
   return (
     <div className="container">
       <header className="header" role="banner">
-        <img className="logo" src="/public/image.png" alt="Logotipo Flowhub" />
+        <img 
+        className="logo" 
+        src="/image.png" 
+        alt="Logotipo Flowhub" />
         <h1>Status das Tasks Flowhub</h1>
         <img
           className="perfil"
-          src="/public/perfil.png"
+          src="/perfil.png"
           alt="Imagem do perfil"
         />
       </header>
       <div className="search-update-container">
         <div className="search-input-wrapper">
           <span className="search-icon" aria-hidden="true">
-            <img src="/public/search.png" alt="Pesquisar" />
+            <img src="/search.png" alt="Pesquisar" />
           </span>
           <input
             type="text"
