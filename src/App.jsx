@@ -250,12 +250,12 @@ function App() {
       };
     } else if (task.Status === "failed") {
       return {
-        background: "rlinear-gradient(to right, #b4210e, #da0f0f)",
+        background: "linear-gradient(to right, #b4210e, #da0f0f)",
         color: "white",
         fontWeight: "bold",
         borderRadius: "4px",
         padding: "12px 2px",
-        border: "2px solid #b4210e",
+        border: "2px solid #791305",
       };
     } else if (task.Status === "running") {
       return {
