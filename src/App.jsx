@@ -4,6 +4,7 @@ import {
   MdOutlineKeyboardDoubleArrowLeft,
   MdOutlineKeyboardDoubleArrowRight,
 } from "react-icons/md";
+import TaskStatusModal from "./component/TaskStatusModal"; // Certifique-se do nome do arquivo!
 
 const lambdaStatusUrl =
   "https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/status";
@@ -19,14 +20,20 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 8;
 
+  // Estado para controlar o modal de teste de conexão
+  const [statusModal, setStatusModal] = useState({
+    isOpen: false,
+    currentMessage: "",
+    task: null,
+  });
+
   // Atualiza a referência das tasks sempre que elas mudam
   useEffect(() => {
     tasksRef.current = tasks;
   }, [tasks]);
 
-  // Busca as tasks apenas uma vez na montagem e define os estados iniciais conforme as premissas
+  // Função para buscar as tasks
   async function fetchTasks() {
-    console.log("Buscando tasks...");
     try {
       const response = await fetch(lambdaStatusUrl);
       const data = await response.json();
@@ -35,25 +42,19 @@ function App() {
       tasksData = tasksData.map((task) => {
         let connectionDisabled = true;
         let connectionClass = "btn-gray";
-        // Todas as tasks iniciam com o botão de Restart desabilitado
         let restartDisabled = true;
-        // Texto padrão para o botão de conexão
         let connectionText = "Conexão";
 
         if (task.Status === "running") {
-          // Já está conectado: botão de conexão desabilitado, cor verde e restart desabilitado
           connectionDisabled = true;
           connectionClass = "btn-green";
         } else if (task.Status === "ready") {
-          // Task pronta mas ainda não iniciou a conexão: botão desabilitado, cinza e restart desabilitado
           connectionDisabled = true;
           connectionClass = "btn-gray";
         } else if (task.Status === "failed") {
-          // Task com falha: botão clicável (habilitado) para tentar conexão novamente; restart desabilitado inicialmente
           connectionDisabled = false;
           connectionClass = "btn-gray";
         } else if (task.Status === "stopped") {
-          // Task parada: botão clicável, cinza; restart desabilitado inicialmente
           connectionDisabled = false;
           connectionClass = "btn-gray";
         }
@@ -80,11 +81,15 @@ function App() {
   // Função para testar a conexão de uma task
   async function testConnection(taskIndex) {
     const task = tasks[taskIndex];
+
+    // Abre o modal e inicia as mensagens
+    setStatusModal({
+      isOpen: true,
+      currentMessage: `Iniciando teste de conexão para a task: ${task.TaskIdentifier}`,
+      task,
+    });
+
     try {
-      console.log(
-        "Iniciando teste de conexão para a task:",
-        task.TaskIdentifier
-      );
       const taskResponse = await fetch(
         "https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/get-task-details",
         {
@@ -94,13 +99,19 @@ function App() {
           body: JSON.stringify({ taskIdentifier: task.TaskIdentifier }),
         }
       );
-      if (!taskResponse.ok) throw new Error("Erro ao obter detalhes da task.");
+      if (!taskResponse.ok)
+        throw new Error("Erro ao obter detalhes da task.");
       const taskData = await taskResponse.json();
       const taskArn = taskData.ReplicationInstanceArn;
       const endpointArn =
         taskData.SourceEndpointArn || taskData.TargetEndpointArn;
       if (!taskArn || !endpointArn)
         throw new Error("Erro: ARN não encontrados.");
+
+      setStatusModal((prev) => ({
+        ...prev,
+        currentMessage: "Detalhes da task obtidos.",
+      }));
 
       const payload = {
         action: "start-test",
@@ -121,6 +132,10 @@ function App() {
     } catch (error) {
       alert(error.message);
       console.error(error);
+      setStatusModal((prev) => ({
+        ...prev,
+        currentMessage: `Erro: ${error.message}`,
+      }));
     }
   }
 
@@ -141,40 +156,42 @@ function App() {
       });
       const result = await response.json();
       status = result.status;
-      console.log(`Status atual para a task ${task.TaskIdentifier}: ${status}`);
+      setStatusModal((prev) => ({
+        ...prev,
+        currentMessage: `Status atual: ${status}`,
+      }));
     }
     alert(`Teste finalizado: ${status}`);
+    setStatusModal((prev) => ({
+      ...prev,
+      currentMessage: `Teste finalizado: ${status}`,
+    }));
     const normalizedStatus = status.toLowerCase().trim();
     const currentTask = tasks[taskIndex];
 
-    // Constrói um objeto com todas as atualizações necessárias
     const newProps = {};
     if (normalizedStatus === "successful") {
-      // Se a task estava em "failed" ou "stopped", habilita o restart mantendo o status atual
       if (currentTask.Status === "failed" || currentTask.Status === "stopped") {
-        newProps.connectionClass = "btn-green"; // Indica sucesso na conexão
+        newProps.connectionClass = "btn-green";
         newProps.connectionText = "Conexão (OK)";
-        newProps.restartDisabled = false; // Habilita o botão de Restart
+        newProps.restartDisabled = false;
       } else if (currentTask.Status === "running") {
         newProps.connectionClass = "btn-green";
         newProps.connectionText = "Conexão (OK)";
-        newProps.restartDisabled = true; // Mantém desabilitado
+        newProps.restartDisabled = true;
       }
     } else if (normalizedStatus === "failed") {
       newProps.connectionClass = "btn-red";
       newProps.connectionText = "Conexão (Falha)";
       newProps.restartDisabled = true;
     }
-    // Reabilita o botão de conexão em qualquer caso
     newProps.connectionDisabled = false;
-
     updateTask(taskIndex, newProps);
   }
 
   // Função para invocar a Step Function
   async function invokeStepFunction(taskIndex) {
     const task = tasks[taskIndex];
-    console.log("Invocando Step Function para a task:", task.TaskIdentifier);
     const payload = { task_identifier: task.TaskIdentifier };
     try {
       const response = await fetch(stepFunctionUrl, {
@@ -197,7 +214,6 @@ function App() {
   function updateTask(index, newProps) {
     const updatedTasks = [...tasks];
     updatedTasks[index] = { ...updatedTasks[index], ...newProps };
-    console.log("Task atualizada:", updatedTasks[index]);
     setTasks(updatedTasks);
   }
 
@@ -237,7 +253,7 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Função para definir o estilo visual do status (exemplo para o botão ou célula)
+  // Função para definir o estilo visual do status
   function getStatusStyle(task) {
     if (task.Status === "running" && task.MigrationProgress === 100) {
       return {
@@ -289,25 +305,9 @@ function App() {
       if (currentPage <= 4) {
         pages = [1, 2, 3, 4, 5, "...", totalPages];
       } else if (currentPage >= totalPages - 3) {
-        pages = [
-          1,
-          "...",
-          totalPages - 4,
-          totalPages - 3,
-          totalPages - 2,
-          totalPages - 1,
-          totalPages,
-        ];
+        pages = [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
       } else {
-        pages = [
-          1,
-          "...",
-          currentPage - 1,
-          currentPage,
-          currentPage + 1,
-          "...",
-          totalPages,
-        ];
+        pages = [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
       }
     }
     return pages;
@@ -317,7 +317,6 @@ function App() {
     task.TaskIdentifier.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Paginação
   const indexOfLastTask = currentPage * tasksPerPage;
   const indexOfFirstTask = indexOfLastTask - tasksPerPage;
   const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
@@ -326,16 +325,9 @@ function App() {
   return (
     <div className="container">
       <header className="header" role="banner">
-        <img 
-        className="logo" 
-        src="/image.png" 
-        alt="Logotipo Flowhub" />
+        <img className="logo" src="/image.png" alt="Logotipo Flowhub" />
         <h1>Status das Tasks Flowhub</h1>
-        <img
-          className="perfil"
-          src="/perfil.png"
-          alt="Imagem do perfil"
-        />
+        <img className="perfil" src="/perfil.png" alt="Imagem do perfil" />
       </header>
       <div className="search-update-container">
         <div className="search-input-wrapper">
@@ -353,16 +345,11 @@ function App() {
             }}
           />
         </div>
-        <button
-          id="update-button"
-          onClick={fetchTasks}
-          aria-label="Atualizar status das tasks"
-        >
+        <button id="update-button" onClick={fetchTasks} aria-label="Atualizar status das tasks">
           Atualizar Status
         </button>
       </div>
       <div className="task-list">
-        {/* Cabeçalho */}
         <div className="task-row task-row-header">
           <div className="task-cell task-name">TASKS</div>
           <div className="task-cell">STATUS</div>
@@ -371,7 +358,18 @@ function App() {
           <div className="task-cell">STEP FUNCTION</div>
         </div>
 
-        {/* Linhas das tasks */}
+        {/* Modal de Teste de Conexão */}
+        {statusModal.isOpen && (
+          <TaskStatusModal
+            task={statusModal.task}
+            currentMessage={statusModal.currentMessage}
+            onClose={() =>
+              setStatusModal({ isOpen: false, currentMessage: "", task: null })
+            }
+          />
+        )}
+
+        {/* Lista de tasks */}
         {currentTasks.map((task, index) => (
           <div key={task.TaskIdentifier} className="task-row">
             <div className="task-cell task-namee">{task.TaskIdentifier}</div>
@@ -412,19 +410,12 @@ function App() {
           <MdOutlineKeyboardDoubleArrowLeft size={12} />
         </button>
 
-        {getPageNumbers(currentPage, totalPages).map((page, index) => {
-          if (page === "...") {
-            return (
-              <span
-                key={`ellipsis-${index}`}
-                className="ellipsis"
-                aria-hidden="true"
-              >
-                {page}
-              </span>
-            );
-          }
-          return (
+        {getPageNumbers(currentPage, totalPages).map((page, index) =>
+          page === "..." ? (
+            <span key={`ellipsis-${index}`} className="ellipsis" aria-hidden="true">
+              {page}
+            </span>
+          ) : (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
@@ -433,8 +424,8 @@ function App() {
             >
               {page}
             </button>
-          );
-        })}
+          )
+        )}
 
         <button
           className="arrow-button"
