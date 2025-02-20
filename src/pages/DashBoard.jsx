@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import "./Dashboard.css";
+import "./DashBoard.css";
 import {
   MdOutlineKeyboardDoubleArrowLeft,
   MdOutlineKeyboardDoubleArrowRight,
