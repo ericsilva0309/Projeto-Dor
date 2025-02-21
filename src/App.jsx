@@ -30,7 +30,7 @@ function App() {
   return (
     <div>
       <div style={{ textAlign: "right", padding: "1rem" }}>
-        <button onClick={() => auth.removeUser()}>Sign out</button>
+        <button onClick={() => auth.signoutRedirect()}>Sign out</button>
       </div>
       <Dashboard />
     </div>
