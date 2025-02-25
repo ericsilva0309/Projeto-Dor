@@ -50,6 +50,7 @@
     width: 3%;
     height: 3%;
     margin-right: 1%;
+    cursor: pointer;
   }
   
   .search-update-container {
