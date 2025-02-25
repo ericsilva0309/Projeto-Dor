@@ -4,7 +4,7 @@ import {
   MdOutlineKeyboardDoubleArrowLeft,
   MdOutlineKeyboardDoubleArrowRight,
 } from "react-icons/md";
-import TaskStatusModal from "../component/TaskStatusModal"; // Certifique-se do caminho correto
+import TaskStatusModal from "../component/TaskStatusModal";
 
 const lambdaStatusUrl =
   "https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/status";
@@ -20,7 +20,7 @@ function DashBoard() {
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 8;
 
-  // Estado para o modal de status de teste
+  // Estado do modal para teste de conexão
   const [statusModal, setStatusModal] = useState({
     isOpen: false,
     currentMessage: "",
@@ -31,45 +31,63 @@ function DashBoard() {
     tasksRef.current = tasks;
   }, [tasks]);
 
-  // Busca as tasks a partir do endpoint lambdaStatusUrl
+  // Função para buscar as tasks do endpoint lambdaStatusUrl
   async function fetchTasks() {
     try {
       const response = await fetch(lambdaStatusUrl);
       const data = await response.json();
       let tasksData =
         typeof data.body === "string" ? JSON.parse(data.body) : data.body;
-      tasksData = tasksData.map((task) => {
-        let connectionDisabled = true;
-        let connectionClass = "btn-gray";
-        let restartDisabled = true;
-        let connectionText = "Conexão";
 
-        if (task.Status === "running") {
-          connectionDisabled = true;
-          connectionClass = "btn-green";
-        } else if (task.Status === "ready") {
-          connectionDisabled = true;
-          connectionClass = "btn-gray";
-        } else if (task.Status === "failed") {
-          connectionDisabled = false;
-          connectionClass = "btn-gray";
-        } else if (task.Status === "stopped") {
-          connectionDisabled = false;
-          connectionClass = "btn-gray";
-        }
-        return {
-          ...task,
-          connectionDisabled,
-          connectionClass,
-          connectionText,
-          restartDisabled,
-          stepFunctionStatus: "Não acionada",
-        };
-      });
-      setTasks(tasksData);
+      // Para cada task, consulta o status da Step Function (get_last_status)
+      const updatedTasks = await Promise.all(
+        tasksData.map(async (task) => {
+          const stepFnStatus = await fetchStepFunctionStatusForTask(task);
+          // Configura propriedades iniciais para botões de conexão/restart
+          let connectionDisabled = true;
+          let connectionClass = "btn-gray";
+          let connectionText = "Conexão";
+          if (task.Status === "failed" || task.Status === "stopped") {
+            connectionDisabled = false;
+          }
+          return {
+            ...task,
+            connectionDisabled,
+            connectionClass,
+            connectionText,
+            restartDisabled: true,
+            stepFunctionStatus: stepFnStatus,
+          };
+        })
+      );
+
+      setTasks(updatedTasks);
     } catch (error) {
       alert("Erro ao buscar as tasks.");
       console.error(error);
+    }
+  }
+
+  // Função que consulta o status da Step Function para uma task via ação "get_last_status"
+  async function fetchStepFunctionStatusForTask(task) {
+    try {
+      const response = await fetch(stepFunctionUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "get_last_status",
+          task_identifier: task.TaskIdentifier,
+        }),
+      });
+      if (!response.ok) {
+        // Se não encontrar registro, considera que a Step Function não foi acionada
+        return "Não iniciada";
+      }
+      const data = await response.json();
+      return data.status || "Desconhecido";
+    } catch (error) {
+      console.error("Erro ao buscar status da Step Function:", error);
+      return "Não iniciada";
     }
   }
 
@@ -97,8 +115,7 @@ function DashBoard() {
           body: JSON.stringify({ taskIdentifier: task.TaskIdentifier }),
         }
       );
-      if (!taskResponse.ok)
-        throw new Error("Erro ao obter detalhes da task.");
+      if (!taskResponse.ok) throw new Error("Erro ao obter detalhes da task.");
       const taskData = await taskResponse.json();
       const taskArn = taskData.ReplicationInstanceArn;
       const endpointArn =
@@ -136,7 +153,7 @@ function DashBoard() {
     }
   }
 
-  // Função para checar o status do teste de conexão
+  // Função para checar o status do teste de conexão (mantém o modal atualizado)
   async function checkConnectionStatus(task, taskIndex, taskArn, endpointArn) {
     let status = "testing";
     while (status === "testing") {
@@ -185,7 +202,7 @@ function DashBoard() {
     updateTask(taskIndex, newProps);
   }
 
-  // Função para invocar a Step Function
+  // Função para invocar a Step Function para uma task
   async function invokeStepFunction(taskIndex) {
     const task = tasks[taskIndex];
     const payload = { task_identifier: task.TaskIdentifier };
@@ -197,6 +214,7 @@ function DashBoard() {
       });
       const data = await response.json();
       updateTask(taskIndex, {
+        // Se houver executionArn, considera que a Step Function foi acionada
         stepFunctionStatus: data.executionArn ? "Executando" : "Não acionada",
         executionArn: data.executionArn,
       });
@@ -206,7 +224,7 @@ function DashBoard() {
     }
   }
 
-  // Função para checar periodicamente o status da Step Function
+  // Checa periodicamente o status da Step Function para as tasks com executionArn
   async function checkStepFunctionStatus() {
     const currentTasks = tasksRef.current;
     const updatedTasks = [...currentTasks];
@@ -217,16 +235,14 @@ function DashBoard() {
         const response = await fetch(stepFunctionUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ executionArn: task.executionArn, task_identifier: task.TaskIdentifier }),
+          body: JSON.stringify({
+            executionArn: task.executionArn,
+            task_identifier: task.TaskIdentifier,
+          }),
         });
         const data = await response.json();
         if (data.status) {
-          const finalStatuses = ["succeeded", "failed", "aborted"];
-          if (finalStatuses.includes(data.status.toLowerCase())) {
-            updatedTasks[i].stepFunctionStatus = "Não acionada";
-          } else {
-            updatedTasks[i].stepFunctionStatus = data.status;
-          }
+          updatedTasks[i].stepFunctionStatus = data.status;
         }
       } catch (error) {
         console.error("Erro ao verificar status da Step Function:", error);
@@ -299,9 +315,25 @@ function DashBoard() {
       if (currentPage <= 4) {
         pages = [1, 2, 3, 4, 5, "...", totalPages];
       } else if (currentPage >= totalPages - 3) {
-        pages = [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+        pages = [
+          1,
+          "...",
+          totalPages - 4,
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages,
+        ];
       } else {
-        pages = [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
+        pages = [
+          1,
+          "...",
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          "...",
+          totalPages,
+        ];
       }
     }
     return pages;
@@ -339,7 +371,11 @@ function DashBoard() {
             }}
           />
         </div>
-        <button id="update-button" onClick={fetchTasks} aria-label="Atualizar status das tasks">
+        <button
+          id="update-button"
+          onClick={fetchTasks}
+          aria-label="Atualizar status das tasks"
+        >
           Atualizar Status
         </button>
       </div>
@@ -400,7 +436,11 @@ function DashBoard() {
         </button>
         {getPageNumbers(currentPage, totalPages).map((page, index) =>
           page === "..." ? (
-            <span key={`ellipsis-${index}`} className="ellipsis" aria-hidden="true">
+            <span
+              key={`ellipsis-${index}`}
+              className="ellipsis"
+              aria-hidden="true"
+            >
               {page}
             </span>
           ) : (

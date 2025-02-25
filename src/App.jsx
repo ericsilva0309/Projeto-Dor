@@ -1,4 +1,3 @@
-// src/App.js
 import { useAuth } from "react-oidc-context";
 import Dashboard from "./pages/DashBoard";
 import { useEffect } from "react";
