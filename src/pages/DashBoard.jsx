@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "react-oidc-context";
+import { cognitoAuthConfig } from "../cognitoConfig";
 import "./DashBoard.css";
 import {
   MdOutlineKeyboardDoubleArrowLeft,
@@ -344,7 +345,7 @@ function DashBoard() {
     try {
       console.log("Iniciando signout...");
       await auth.signoutRedirect({
-        client_id: auth.userManager.settings.client_id,
+        client_id: cognitoAuthConfig.client_id,
       });
     } catch (error) {
       console.error("Erro durante o signout:", error);
