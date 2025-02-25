@@ -340,6 +340,17 @@ function DashBoard() {
     return pages;
   }
 
+  const handleSignOut = async () => {
+    try {
+      console.log("Iniciando signout...");
+      await auth.signoutRedirect({
+        client_id: auth.userManager.settings.client_id,
+      });
+    } catch (error) {
+      console.error("Erro durante o signout:", error);
+    }
+  };
+
   const filteredTasks = tasks.filter((task) =>
     task.TaskIdentifier.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -358,11 +369,7 @@ function DashBoard() {
           className="perfil"
           src="/perfil.png"
           alt="Imagem do perfil"
-          onClick={() =>
-            auth.signoutRedirect({
-              client_id: auth.userManager.settings.client_id,
-            })
-          }
+          onClick={handleSignOut}
           title="Clique para sair"
         />
       </header>
