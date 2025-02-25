@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "react-oidc-context";
 import "./DashBoard.css";
 import {
   MdOutlineKeyboardDoubleArrowLeft,
@@ -14,6 +15,7 @@ const stepFunctionUrl =
   "https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/invoke";
 
 function DashBoard() {
+  const auth = useAuth();
   const [tasks, setTasks] = useState([]);
   const tasksRef = useRef(tasks);
   const [searchTerm, setSearchTerm] = useState("");
@@ -314,9 +316,25 @@ function DashBoard() {
       if (currentPage <= 4) {
         pages = [1, 2, 3, 4, 5, "...", totalPages];
       } else if (currentPage >= totalPages - 3) {
-        pages = [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+        pages = [
+          1,
+          "...",
+          totalPages - 4,
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages,
+        ];
       } else {
-        pages = [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
+        pages = [
+          1,
+          "...",
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          "...",
+          totalPages,
+        ];
       }
     }
     return pages;
@@ -336,7 +354,13 @@ function DashBoard() {
       <header className="header" role="banner">
         <img className="logo" src="/image.png" alt="Logotipo Flowhub" />
         <h1>Status das Tasks Flowhub</h1>
-        <img className="perfil" src="/perfil.png" alt="Imagem do perfil" />
+        <img
+          className="perfil"
+          src="/perfil.png"
+          alt="Imagem do perfil"
+          onClick={() => auth.signoutRedirect}
+          title="Clique para sair"
+        />
       </header>
       <div className="search-update-container">
         <div className="search-input-wrapper">
