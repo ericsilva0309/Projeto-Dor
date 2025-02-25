@@ -76,7 +76,7 @@ function DashBoard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "get_last_status",
-          task_identifier: task.TaskIdentifier,
+          task_identifier: task.TaskIdentifier.toLowerCase(),
         }),
       });
       if (!response.ok) {
