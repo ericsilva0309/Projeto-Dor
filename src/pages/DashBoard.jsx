@@ -358,7 +358,7 @@ function DashBoard() {
           className="perfil"
           src="/perfil.png"
           alt="Imagem do perfil"
-          onClick={() => auth.signoutRedirect}
+          onClick={() => auth.signoutRedirect()}
           title="Clique para sair"
         />
       </header>
