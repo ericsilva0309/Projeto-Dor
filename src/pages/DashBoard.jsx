@@ -214,7 +214,6 @@ function DashBoard() {
       });
       const data = await response.json();
       updateTask(taskIndex, {
-        // Se houver executionArn, considera que a Step Function foi acionada
         stepFunctionStatus: data.executionArn ? "Executando" : "Não acionada",
         executionArn: data.executionArn,
       });
@@ -315,25 +314,9 @@ function DashBoard() {
       if (currentPage <= 4) {
         pages = [1, 2, 3, 4, 5, "...", totalPages];
       } else if (currentPage >= totalPages - 3) {
-        pages = [
-          1,
-          "...",
-          totalPages - 4,
-          totalPages - 3,
-          totalPages - 2,
-          totalPages - 1,
-          totalPages,
-        ];
+        pages = [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
       } else {
-        pages = [
-          1,
-          "...",
-          currentPage - 1,
-          currentPage,
-          currentPage + 1,
-          "...",
-          totalPages,
-        ];
+        pages = [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
       }
     }
     return pages;
