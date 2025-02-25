@@ -28,13 +28,6 @@ function App() {
   // Se o usuário estiver autenticado, renderize o Dashboard e um botão de logout
   return (
     <div>
-      <div style={{ textAlign: "right", padding: "1rem" }}>
-        <button onClick={() =>
-            auth.signoutRedirect({
-              client_id: auth.userManager.settings.client_id,
-            })
-          }>Sign out</button>
-      </div>
       <Dashboard />
     </div>
   );
