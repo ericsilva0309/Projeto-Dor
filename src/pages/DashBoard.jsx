@@ -53,12 +53,17 @@ function DashBoard() {
           if (task.Status === "failed" || task.Status === "stopped") {
             connectionDisabled = false;
           }
+
+          let restartDisabled = true;
+          if (stepFnStatus.toLowerCase() === "failed") {
+            restartDisabled = false;
+          }
           return {
             ...task,
             connectionDisabled,
             connectionClass,
             connectionText,
-            restartDisabled: true,
+            restartDisabled,
             stepFunctionStatus: stepFnStatus,
           };
         })
