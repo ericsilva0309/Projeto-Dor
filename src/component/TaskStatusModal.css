@@ -38,7 +38,7 @@
   
   /* Cabeçalho com gradiente, borda arredondada superior e espaçamento interno */
   .modal2-header {
-    background: linear-gradient(90deg, #4a90e2, #50e3c2);
+    background: linear-gradient(90deg, #3479c7, #133e9c);
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     color: #fff;
