@@ -56,7 +56,7 @@ function DashBoard() {
 
           let restartDisabled = true;
           if (stepFnStatus.toLowerCase() === "failed") {
-            restartDisabled = false;
+            restartDisabled = true;
           }
           return {
             ...task,
