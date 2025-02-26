@@ -316,6 +316,8 @@ body {
   color: rgb(102, 102, 102);
   min-width: 135px;
   text-align: center;
+  max-width: 135px;
+  font-size: 0.9em;
 }
 
 /* Modal de detalhes */
