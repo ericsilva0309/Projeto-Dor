@@ -156,12 +156,14 @@ body {
 
 /* Cabeçalho da lista */
 .task-row-header {
-  display: flex;
+  display: grid;
+  /* Define 5 colunas: a primeira ocupa 2 frações e as demais 1 fração, exceto a última que terá largura fixa */
+  grid-template-columns: 2fr 1fr 1fr 1fr 135px;
+  align-items: center;
   background-color: #f1f1f1;
-  flex-wrap: wrap;
-  font-weight: lighter;
-  text-align: left;
   padding: 2px 15px;
+  font-weight: lighter;
+  text-align: center;
 }
 
 /* Células (colunas) */
@@ -272,10 +274,10 @@ body {
   border: 2px solid #7e7e7e;
 }
 
-.task-row-header .task-cell:not(.task-name) {
+/* .task-row-header .task-cell:not(.task-name) {
   text-align: right;
   padding-right: 20px;
-}
+} */
 
 
 #update-button {

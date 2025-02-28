@@ -34,7 +34,6 @@ function DashBoard() {
     tasksRef.current = tasks;
   }, [tasks]);
 
-  // Função para buscar as tasks do endpoint lambdaStatusUrl
   async function fetchTasks() {
     try {
       const response = await fetch(lambdaStatusUrl);
@@ -42,11 +41,9 @@ function DashBoard() {
       let tasksData =
         typeof data.body === "string" ? JSON.parse(data.body) : data.body;
 
-      // Para cada task, consulta o status da Step Function (get_last_status)
       const updatedTasks = await Promise.all(
         tasksData.map(async (task) => {
           const stepFnStatus = await fetchStepFunctionStatusForTask(task);
-          // Configura propriedades iniciais para botões de conexão/restart
           let connectionDisabled = true;
           let connectionClass = "btn-gray";
           let connectionText = "Conexão";
@@ -76,7 +73,6 @@ function DashBoard() {
     }
   }
 
-  // Função que consulta o status da Step Function para uma task via ação "get_last_status"
   async function fetchStepFunctionStatusForTask(task) {
     try {
       const response = await fetch(stepFunctionUrl, {
@@ -88,7 +84,6 @@ function DashBoard() {
         }),
       });
       if (!response.ok) {
-        // Se não encontrar registro, considera que a Step Function não foi acionada
         return "Não iniciada";
       }
       const data = await response.json();
@@ -103,7 +98,6 @@ function DashBoard() {
     fetchTasks();
   }, []);
 
-  // Função para testar a conexão de uma task
   async function testConnection(taskIndex) {
     const task = tasks[taskIndex];
 
@@ -123,7 +117,8 @@ function DashBoard() {
           body: JSON.stringify({ taskIdentifier: task.TaskIdentifier }),
         }
       );
-      if (!taskResponse.ok) throw new Error("Erro ao obter detalhes da task.");
+      if (!taskResponse.ok)
+        throw new Error("Erro ao obter detalhes da task.");
       const taskData = await taskResponse.json();
       const taskArn = taskData.ReplicationInstanceArn;
       const endpointArn =
@@ -161,7 +156,6 @@ function DashBoard() {
     }
   }
 
-  // Função para checar o status do teste de conexão (mantém o modal atualizado)
   async function checkConnectionStatus(task, taskIndex, taskArn, endpointArn) {
     let status = "testing";
     while (status === "testing") {
@@ -210,7 +204,6 @@ function DashBoard() {
     updateTask(taskIndex, newProps);
   }
 
-  // Função para invocar a Step Function para uma task
   async function invokeStepFunction(taskIndex) {
     const task = tasks[taskIndex];
     const payload = { task_identifier: task.TaskIdentifier };
@@ -231,7 +224,6 @@ function DashBoard() {
     }
   }
 
-  // Checa periodicamente o status da Step Function para as tasks com executionArn
   async function checkStepFunctionStatus() {
     const currentTasks = tasksRef.current;
     const updatedTasks = [...currentTasks];
@@ -404,12 +396,13 @@ function DashBoard() {
         </button>
       </div>
       <div className="task-list">
+        {/* Header modificado para usar Grid */}
         <div className="task-row task-row-header">
           <div className="task-cell task-name">TASKS</div>
           <div className="task-cell">STATUS</div>
           <div className="task-cell-connection">CONEXÃO</div>
           <div className="task-cell-restart">RESTART</div>
-          <div className="task-cell">STEP FUNCTION</div>
+          <div className="task-stepFunction">STEP FUNCTION</div>
         </div>
         {statusModal.isOpen && (
           <TaskStatusModal
@@ -460,11 +453,7 @@ function DashBoard() {
         </button>
         {getPageNumbers(currentPage, totalPages).map((page, index) =>
           page === "..." ? (
-            <span
-              key={`ellipsis-${index}`}
-              className="ellipsis"
-              aria-hidden="true"
-            >
+            <span key={`ellipsis-${index}`} className="ellipsis" aria-hidden="true">
               {page}
             </span>
           ) : (
