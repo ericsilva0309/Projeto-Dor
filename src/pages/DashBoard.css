@@ -166,6 +166,16 @@ body {
   text-align: center;
 }
 
+.task-row-header .task-stepFunction {
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  min-width: auto;
+  max-width: auto;
+  font-size: inherit;
+}
+
 /* Células (colunas) */
 .task-cell {
   flex: 1;

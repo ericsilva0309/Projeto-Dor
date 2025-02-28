@@ -50,7 +50,6 @@ function DashBoard() {
           if (task.Status === "failed" || task.Status === "stopped") {
             connectionDisabled = false;
           }
-
           let restartDisabled = true;
           if (stepFnStatus.toLowerCase() === "failed") {
             restartDisabled = true;
@@ -396,7 +395,7 @@ function DashBoard() {
         </button>
       </div>
       <div className="task-list">
-        {/* Header modificado para usar Grid */}
+        {/* Header modificado para grid */}
         <div className="task-row task-row-header">
           <div className="task-cell task-name">TASKS</div>
           <div className="task-cell">STATUS</div>
