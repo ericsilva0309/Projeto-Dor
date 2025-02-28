@@ -100,7 +100,7 @@ body {
 }
 
 .search-input-wrapper input {
-  width: 40%;
+  width: 46%;
   padding: 15px 15px 15px 40px;
   font-size: 16px;
   border: 2px solid #ccc;
@@ -190,6 +190,7 @@ body {
   border-radius: 10px;
   margin-right: 10px;
   padding: 12px;
+  padding-right: 100px;
 }
 
 .task-cell.title {
@@ -270,6 +271,12 @@ body {
   cursor: pointer;
   border: 2px solid #7e7e7e;
 }
+
+.task-row-header .task-cell:not(.task-name) {
+  text-align: right;
+  padding-right: 20px;
+}
+
 
 #update-button {
   display: block;
