@@ -23,6 +23,8 @@ function DashBoard() {
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 8;
 
+  const [loading, setLoading] = useState(true);
+
   // Estado do modal para teste de conexão
   const [statusModal, setStatusModal] = useState({
     isOpen: false,
@@ -35,6 +37,7 @@ function DashBoard() {
   }, [tasks]);
 
   async function fetchTasks() {
+    setLoading(true);
     try {
       const response = await fetch(lambdaStatusUrl);
       const data = await response.json();
@@ -69,6 +72,8 @@ function DashBoard() {
     } catch (error) {
       alert("Erro ao buscar as tasks.");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -116,8 +121,7 @@ function DashBoard() {
           body: JSON.stringify({ taskIdentifier: task.TaskIdentifier }),
         }
       );
-      if (!taskResponse.ok)
-        throw new Error("Erro ao obter detalhes da task.");
+      if (!taskResponse.ok) throw new Error("Erro ao obter detalhes da task.");
       const taskData = await taskResponse.json();
       const taskArn = taskData.ReplicationInstanceArn;
       const endpointArn =
@@ -395,51 +399,70 @@ function DashBoard() {
         </button>
       </div>
       <div className="task-list">
-        {/* Header modificado para grid */}
-        <div className="task-row task-row-header">
-          <div className="task-cell task-name">TASKS</div>
-          <div className="task-cell">STATUS</div>
-          <div className="task-cell-connection">CONEXÃO</div>
-          <div className="task-cell-restart">RESTART</div>
-          <div className="task-stepFunction">STEP FUNCTION</div>
-        </div>
-        {statusModal.isOpen && (
-          <TaskStatusModal
-            task={statusModal.task}
-            currentMessage={statusModal.currentMessage}
-            onClose={() =>
-              setStatusModal({ isOpen: false, currentMessage: "", task: null })
-            }
-          />
-        )}
-        {currentTasks.map((task, index) => (
-          <div key={task.TaskIdentifier} className="task-row">
-            <div className="task-cell task-namee">{task.TaskIdentifier}</div>
-            <div className="task-cell" style={getStatusStyle(task)}>
-              {task.Status}
-            </div>
-            <div className="task-cell-connection">
-              <button
-                onClick={() => testConnection(index + indexOfFirstTask)}
-                disabled={task.connectionDisabled}
-                className={task.connectionClass}
-                aria-label={`Testar conexão para a task ${task.TaskIdentifier}`}
-              >
-                {task.connectionText || "Conexão"}
-              </button>
-            </div>
-            <div className="task-cell-restart">
-              <button
-                onClick={() => invokeStepFunction(index + indexOfFirstTask)}
-                disabled={task.restartDisabled}
-                aria-label={`Reiniciar task ${task.TaskIdentifier}`}
-              >
-                Restart
-              </button>
-            </div>
-            <div className="task-stepFunction">{task.stepFunctionStatus}</div>
+        {loading ? (
+          <div
+            className="loading"
+            style={{ padding: "20px", textRendering: "center" }}
+          >
+            <div className="spinner"></div>
           </div>
-        ))}
+        ) : (
+          <>
+            {/* Header modificado para grid */}
+            <div className="task-row task-row-header">
+              <div className="task-cell task-name">TASKS</div>
+              <div className="task-cell">STATUS</div>
+              <div className="task-cell-connection">CONEXÃO</div>
+              <div className="task-cell-restart">RESTART</div>
+              <div className="task-stepFunction">STEP FUNCTION</div>
+            </div>
+            {statusModal.isOpen && (
+              <TaskStatusModal
+                task={statusModal.task}
+                currentMessage={statusModal.currentMessage}
+                onClose={() =>
+                  setStatusModal({
+                    isOpen: false,
+                    currentMessage: "",
+                    task: null,
+                  })
+                }
+              />
+            )}
+            {currentTasks.map((task, index) => (
+              <div key={task.TaskIdentifier} className="task-row">
+                <div className="task-cell task-namee">
+                  {task.TaskIdentifier}
+                </div>
+                <div className="task-cell" style={getStatusStyle(task)}>
+                  {task.Status}
+                </div>
+                <div className="task-cell-connection">
+                  <button
+                    onClick={() => testConnection(index + indexOfFirstTask)}
+                    disabled={task.connectionDisabled}
+                    className={task.connectionClass}
+                    aria-label={`Testar conexão para a task ${task.TaskIdentifier}`}
+                  >
+                    {task.connectionText || "Conexão"}
+                  </button>
+                </div>
+                <div className="task-cell-restart">
+                  <button
+                    onClick={() => invokeStepFunction(index + indexOfFirstTask)}
+                    disabled={task.restartDisabled}
+                    aria-label={`Reiniciar task ${task.TaskIdentifier}`}
+                  >
+                    Restart
+                  </button>
+                </div>
+                <div className="task-stepFunction">
+                  {task.stepFunctionStatus}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
       <div className="pagination-container">
         <button
@@ -452,7 +475,11 @@ function DashBoard() {
         </button>
         {getPageNumbers(currentPage, totalPages).map((page, index) =>
           page === "..." ? (
-            <span key={`ellipsis-${index}`} className="ellipsis" aria-hidden="true">
+            <span
+              key={`ellipsis-${index}`}
+              className="ellipsis"
+              aria-hidden="true"
+            >
               {page}
             </span>
           ) : (
