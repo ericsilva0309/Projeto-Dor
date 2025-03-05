@@ -609,6 +609,10 @@ body {
     min-height: 100vh;
   }
 
+  .header{
+    font-size: 0.4em;
+  }
+
   .task-list {
     max-height: 60vh;
   }
