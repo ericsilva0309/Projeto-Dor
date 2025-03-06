@@ -483,7 +483,7 @@ body {
 .dark-mode input {
   background-color: #212430;
   color: #e0e0e0;
-  border: 1.5px solid #7a7979;
+  border: 2px solid #7a7979;
 }
 
 .dark-mode .search-icon{
@@ -501,7 +501,7 @@ body {
 
 .dark-mode .task-cell.task-namee {
   color: #ecf0f1;
-  border: 1.5px solid #7a7979;
+  border: 2px solid #7a7979;
 }
 
 /* Linhas da lista */
