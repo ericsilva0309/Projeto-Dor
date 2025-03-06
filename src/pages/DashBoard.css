@@ -99,7 +99,7 @@ body {
 }
 
 .search-input-wrapper input {
-  width: 46%;
+  width: 49%;
   padding: 15px 15px 15px 40px;
   font-size: 16px;
   border: 2px solid #ccc;
@@ -460,6 +460,148 @@ body {
   color: #fff;
   border-color: #007bff;
 }
+
+/* Dark Mode */
+.dark-mode {
+  background-color: #1d1e22;
+  color: #e0e0e0;
+}
+/* Header em Dark Mode */
+.dark-mode .header {
+  background: linear-gradient(#0d2041e3, #171729);
+  color: #e0e0e0;
+}
+
+/* Contêiner principal */
+.dark-mode .container {
+  background-color: #181b20e3;
+  color: #e0e0e0;
+  border: solid 2px #5c5b5b;
+}
+
+/* Inputs e campos de busca */
+.dark-mode input {
+  background-color: #212430;
+  color: #e0e0e0;
+  border: 1.5px solid #7a7979;
+}
+
+.dark-mode .search-icon{
+  -webkit-filter: invert();
+}
+
+.dark-mode input::-webkit-input-placeholder { /* Chrome/Edge/Safari */
+  color: #bdbdbd;
+}
+
+/* Lista de tasks */
+.dark-mode .task-list {
+  background-color: #252a31;
+}
+
+.dark-mode .task-cell.task-namee {
+  color: #ecf0f1;
+  border: 1.5px solid #7a7979;
+}
+
+/* Linhas da lista */
+.dark-mode .task-row {
+  background-color: #212430;
+  border-bottom: 1px solid #686868;
+}
+
+.dark-mode .task-row:hover {
+  background-color: #232735;
+}
+
+.dark-mode .task-row-header .task-cell,
+.dark-mode .task-cell-connection,
+.dark-mode .task-cell-restart,
+.dark-mode .task-stepFunction {
+  color: #c5c5c5;
+}
+
+.task-cell.task-namee,
+.task-cell-connection button,
+.task-cell-restart button,
+.pagination-container button {
+  transition: all 0.3s ease;
+}
+
+/* Botão de atualizar */
+.dark-mode #update-button {
+  background-color: #0d2041e3;
+  color: #e0e0e0;
+  border: 1px solid #1146a1e3;
+}
+
+.dark-mode .task-cell-connection button {
+  background-color: #112241e3;
+  color: #ecf0f1;
+  border: 2px solid #34435ee3;
+}
+
+.dark-mode .task-cell-restart button {
+  background-color: #232531;
+  color: #e0e0e0;
+  border: 2px solid #2f2f2f;
+}
+
+.dark-mode .task-cell-restart button:not(:disabled) {
+  background: linear-gradient(#2f2f2f, #2f2f2f);
+  color: #e0e0e0;
+  border: 2px solid #2f2f2f;
+}
+
+.dark-mode .task-cell-connection button:hover:not(:disabled) {
+  background-color: #223d6de3;
+  color: #e0e0e0;
+  border-color: #4f678fe3;
+}
+
+.dark-mode .pagination-container button {
+  color: #ecf0f1;
+  border-color: #7f8c8d;
+  background-color: #2c3e50;
+}
+
+.dark-mode .pagination-container button:hover {
+  background-color: #34495e;
+}
+
+.dark-mode .pagination-container button.active-page {
+  background-color: #0d3652;
+  border-color: #0f4264;
+}
+
+/* Botão do toggle do tema */
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s;
+  color: inherit;
+}
+
+.theme-toggle:hover {
+  opacity: 0.8;
+}
+
+.dark-mode .theme-toggle {
+  background-color: #0d2041e3;
+  color: #e0e0e0;
+  border: 1px solid #1146a1e3;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 
 @media (max-width: 1200px) {
   .container {

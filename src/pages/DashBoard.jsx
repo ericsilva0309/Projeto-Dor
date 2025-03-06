@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "react-oidc-context";
 import { cognitoAuthConfig } from "../cognitoConfig";
 import "./DashBoard.css";
+import { FiSun, FiMoon } from "react-icons/fi";
 import {
   MdOutlineKeyboardDoubleArrowLeft,
   MdOutlineKeyboardDoubleArrowRight,
@@ -31,6 +32,24 @@ function DashBoard() {
     currentMessage: "",
     task: null,
   });
+
+  const [darkMode, setDarkMode] = useState(() => {
+    const storedDarkMode = localStorage.getItem("darkMode");
+    return storedDarkMode ? JSON.parse(storedDarkMode) : false;
+  });
+
+  // Salva a preferência sempre que darkMode mudar
+  useEffect(() => {
+    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     tasksRef.current = tasks;
@@ -362,7 +381,7 @@ function DashBoard() {
   const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
 
   return (
-    <div className="container">
+    <div className={`container ${darkMode ? "dark-mode" : ""}`}>
       <header className="header" role="banner">
         <img className="logo" src="/image.png" alt="Logotipo Flowhub" />
         <h1>Status das Tasks Flowhub</h1>
@@ -396,6 +415,18 @@ function DashBoard() {
           aria-label="Atualizar status das tasks"
         >
           Atualizar Status
+        </button>
+        <button
+          className="theme-toggle"
+          onClick={() => setDarkMode(!darkMode)}
+          aria-label={`Alternar para modo ${darkMode ? "claro" : "escuro"}`}
+          aria-pressed={darkMode}
+        >
+          {darkMode ? (
+            <FiSun size={20} color={darkMode ? "#fff" : "#000"} />
+          ) : (
+            <FiMoon size={20} color={darkMode ? "#fff" : "#000"} />
+          )}
         </button>
       </div>
       <div className="task-list">
