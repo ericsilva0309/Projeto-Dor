@@ -1,4 +1,3 @@
-A seguir, apresento um modelo de documentação completa e profissional para sua aplicação. Esse documento foi estruturado para ser claro e descritivo, permitindo que pessoas sem conhecimento prévio sobre o sistema compreendam seu funcionamento, a arquitetura utilizada e a lógica por trás de cada funcionalidade.
 
 ---
 
