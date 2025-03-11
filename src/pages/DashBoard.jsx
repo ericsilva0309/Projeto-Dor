@@ -491,10 +491,7 @@ function DashBoard() {
                 <div className="task-cell-restart">
                   <button
                     onClick={() => invokeStepFunction(index + indexOfFirstTask)}
-                    disabled={
-                      task.stepFunctionStatus.toLowerCase() === "executando" ||
-                      task.stepFunctionStatus.toLowerCase() === "running"
-                    }
+                    disabled={task.restartDisabled}
                     aria-label={`Reiniciar task ${task.TaskIdentifier}`}
                   >
                     Restart
