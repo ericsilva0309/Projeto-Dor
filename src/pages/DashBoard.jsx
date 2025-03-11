@@ -285,7 +285,7 @@ function DashBoard() {
   useEffect(() => {
     const interval = setInterval(() => {
       checkStepFunctionStatus();
-    }, 10000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -491,7 +491,10 @@ function DashBoard() {
                 <div className="task-cell-restart">
                   <button
                     onClick={() => invokeStepFunction(index + indexOfFirstTask)}
-                    disabled={task.restartDisabled}
+                    disabled={
+                      task.stepFunctionStatus.toLowerCase() === "executando" ||
+                      task.stepFunctionStatus.toLowerCase() === "running"
+                    }
                     aria-label={`Reiniciar task ${task.TaskIdentifier}`}
                   >
                     Restart
