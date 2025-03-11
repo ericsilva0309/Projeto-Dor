@@ -72,19 +72,19 @@ function DashBoard() {
           if (task.Status === "failed" || task.Status === "stopped") {
             connectionDisabled = false;
           }
-          let restartDisabled = false; // Por padrão, habilitado para restart
+          let restartDisabled = true; // Por padrão, habilitado para restart
 
           // Se a Step Function estiver executando, desabilita o botão
           if (
             stepFnStatus.toLowerCase() === "executando" ||
             stepFnStatus.toLowerCase() === "running"
           ) {
-            restartDisabled = true;
+            restartDisabled = false;
           }
 
           // Se o status indicar falha, o botão pode ser habilitado para permitir o restart
           if (stepFnStatus.toLowerCase() === "failed") {
-            restartDisabled = false;
+            restartDisabled = true;
           }
           return {
             ...task,
