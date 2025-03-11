@@ -73,7 +73,7 @@ function DashBoard() {
             connectionDisabled = false;
           }
           let restartDisabled = true;
-          if (stepFnStatus.toLowerCase() === "failed") {
+          if (stepFnStatus.toLowerCase() === "failed" || stepFnStatus.toLowerCase() === "executando") {
             restartDisabled = true;
           }
           return {
