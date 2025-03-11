@@ -79,7 +79,7 @@ function DashBoard() {
             stepFnStatus.toLowerCase() === "executando" ||
             stepFnStatus.toLowerCase() === "running"
           ) {
-            restartDisabled = false;
+            restartDisabled = true;
           }
 
           // Se o status indicar falha, o botão pode ser habilitado para permitir o restart
