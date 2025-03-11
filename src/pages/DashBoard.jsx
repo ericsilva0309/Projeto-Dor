@@ -274,6 +274,13 @@ function DashBoard() {
         const data = await response.json();
         if (data.status) {
           updatedTasks[i].stepFunctionStatus = data.status;
+          // Atualiza restartDisabled com base no novo status
+          const statusLower = data.status.toLowerCase();
+          if (statusLower === "running" || statusLower === "executando") {
+            updatedTasks[i].restartDisabled = true;
+          } else {
+            updatedTasks[i].restartDisabled = false;
+          }
         }
       } catch (error) {
         console.error("Erro ao verificar status da Step Function:", error);
