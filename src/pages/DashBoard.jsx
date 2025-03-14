@@ -463,8 +463,8 @@ function DashBoard() {
               <div className="task-cell">STATUS</div>
               <div className="task-cell-connection">CONEXÃO</div>
               <div className="task-cell-restart">RESTART</div>
+              <div className="task-cell-updated">ATUALIZADO POR:</div>
               <div className="task-stepFunction">STEP FUNCTION</div>
-              <div className="task-cell-updated">ÚLTIMA ATUALIZAÇÃO POR</div>
             </div>
             {statusModal.isOpen && (
               <TaskStatusModal
