@@ -88,6 +88,7 @@ function DashBoard() {
           }
           return {
             ...task,
+            updatedBy: task.updated_by || "N/A",
             connectionDisabled,
             connectionClass,
             connectionText,
@@ -463,6 +464,7 @@ function DashBoard() {
               <div className="task-cell-connection">CONEXÃO</div>
               <div className="task-cell-restart">RESTART</div>
               <div className="task-stepFunction">STEP FUNCTION</div>
+              <div className="task-cell-updated">ÚLTIMA ATUALIZAÇÃO POR</div>
             </div>
             {statusModal.isOpen && (
               <TaskStatusModal
@@ -503,6 +505,14 @@ function DashBoard() {
                   >
                     Restart
                   </button>
+                </div>
+                <div
+                  className="task-cell-updated"
+                  title={`Última atualização em: ${
+                    task.last_update || "Data desconhecida"
+                  }`}
+                >
+                  {task.updatedBy || "N/A"}
                 </div>
                 <div className="task-stepFunction">
                   {task.stepFunctionStatus}

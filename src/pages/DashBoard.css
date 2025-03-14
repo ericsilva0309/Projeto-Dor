@@ -157,7 +157,7 @@ body {
 .task-row-header {
   display: grid;
   /* Define 5 colunas: a primeira ocupa 2 frações e as demais 1 fração, exceto a última que terá largura fixa */
-  grid-template-columns: 2.7fr 1fr 1fr 1fr 135px;
+  grid-template-columns: 2.7fr 1fr 1fr 1fr 1fr 135px;
   align-items: center;
   background-color: #f1f1f1;
   padding: 2px 15px;
@@ -283,6 +283,17 @@ body {
   background: linear-gradient(rgb(180, 180, 180), rgb(134, 134, 134));
   cursor: pointer;
   border: 2px solid #7e7e7e;
+}
+
+.task-cell-updated {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  color: #666;
 }
 
 /* .task-row-header .task-cell:not(.task-name) {
