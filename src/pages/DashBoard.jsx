@@ -88,7 +88,7 @@ function DashBoard() {
           }
           return {
             ...task,
-            updatedBy: task.updated_by || "N/A",
+            updated_by: task.updated_by,
             connectionDisabled,
             connectionClass,
             connectionText,
@@ -512,7 +512,7 @@ function DashBoard() {
                     task.last_update || "Data desconhecida"
                   }`}
                 >
-                  {task.updatedBy || "N/A"}
+                  {task.updated_by || "N/A"}
                 </div>
                 <div className="task-stepFunction">
                   {task.stepFunctionStatus}
