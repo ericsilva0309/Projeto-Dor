@@ -121,7 +121,7 @@ function DashBoard() {
         return "Não iniciada";
       }
       const data = await response.json();
-      return data.status || "Desconhecido";
+      return data.body?.status || "Desconhecido";
     } catch (error) {
       console.error("Erro ao buscar status da Step Function:", error);
       return "Não iniciada";
@@ -257,50 +257,65 @@ function DashBoard() {
     }
   }
 
-  async function checkStepFunctionStatus() {
-    const currentTasks = tasksRef.current;
-    const updatedTasks = [...currentTasks];
-    for (let i = 0; i < updatedTasks.length; i++) {
-      const task = updatedTasks[i];
-      if (!task.executionArn) continue;
-      try {
-        const response = await fetch(stepFunctionUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            executionArn: task.executionArn,
-            task_identifier: task.TaskIdentifier,
-          }),
-        });
-        const data = await response.json();
-        if (data.status) {
-          updatedTasks[i].stepFunctionStatus = data.status;
-          // Atualiza restartDisabled com base no novo status
-          const statusLower = data.status.toLowerCase();
-          if (statusLower === "running" || statusLower === "executando") {
-            updatedTasks[i].restartDisabled = true;
-          } else {
-            updatedTasks[i].restartDisabled = false;
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao verificar status da Step Function:", error);
-      }
+  async function checkStepFunctionStatus(taskIdentifier) {
+    try {
+      const response = await fetch(stepFunctionUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          executionArn: tasksRef.current.find(
+            (t) => t.TaskIdentifier === taskIdentifier
+          )?.executionArn,
+          task_identifier: taskIdentifier,
+        }),
+      });
+
+      const data = await response.json();
+
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.TaskIdentifier === taskIdentifier
+            ? {
+                ...task,
+                stepFunctionStatus: data.body?.status || "Desconhecido",
+                restartDisabled: !["FAILED", "STOPPED"].includes(
+                  data.body?.status?.toUpperCase()
+                ),
+              }
+            : task
+        )
+      );
+    } catch (error) {
+      console.error("Erro ao verificar status:", error);
     }
-    setTasks(updatedTasks);
   }
 
   useEffect(() => {
+    let isMounted = true;
+
     const interval = setInterval(() => {
-      checkStepFunctionStatus();
+      if (!isMounted) return;
+
+      // Verificar todas as tasks com executionArn
+      tasksRef.current.forEach((task) => {
+        if (task.executionArn) {
+          checkStepFunctionStatus(task.TaskIdentifier);
+        }
+      });
     }, 5000);
-    return () => clearInterval(interval);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  function updateTask(index, newProps) {
-    const updatedTasks = [...tasks];
-    updatedTasks[index] = { ...updatedTasks[index], ...newProps };
-    setTasks(updatedTasks);
+  function updateTask(taskIdentifier, newProps) {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.TaskIdentifier === taskIdentifier ? { ...task, ...newProps } : task
+      )
+    );
   }
 
   function getStatusStyle(task) {
