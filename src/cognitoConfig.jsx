@@ -6,6 +6,6 @@ export const cognitoAuthConfig = {
     redirect_uri: "https://main.d19hnf6nrn03et.amplifyapp.com",
     post_logout_redirect_uri: "https://main.d19hnf6nrn03et.amplifyapp.com/login",
     response_type: "code",
-    scope: "phone openid profile aws.cognito.signin.user email",
+    scope: "phone openid profile email",
     userStore: new WebStorageStateStore({ store: window.localStorage })
   };
