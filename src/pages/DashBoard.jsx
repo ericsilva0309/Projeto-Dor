@@ -88,7 +88,7 @@ function DashBoard() {
           }
           return {
             ...task,
-            updated_by: stepFnStatus.updated_by,
+            updated_by: task.updated_by,
             connectionDisabled,
             connectionClass,
             connectionText,
@@ -117,15 +117,14 @@ function DashBoard() {
           task_identifier: task.TaskIdentifier.toLowerCase(),
         }),
       });
-      if (!response.ok) return "Não iniciada";
+      if (!response.ok) {
+        return "Não iniciada";
+      }
       const data = await response.json();
-      return {
-        status: data.status || "Desconhecido",
-        updated_by: data.updated_by || "N/A",
-      };
+      return data.status || "Desconhecido";
     } catch (error) {
-      console.error("Erro ao buscar status:", error);
-      return { status: "Não iniciada", updated_by: "N/A" };
+      console.error("Erro ao buscar status da Step Function:", error);
+      return "Não iniciada";
     }
   }
 
@@ -244,10 +243,7 @@ function DashBoard() {
     try {
       const response = await fetch(stepFunctionUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.user?.access_token}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await response.json();
@@ -270,10 +266,7 @@ function DashBoard() {
       try {
         const response = await fetch(stepFunctionUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.user?.access_token}`,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             executionArn: task.executionArn,
             task_identifier: task.TaskIdentifier,
