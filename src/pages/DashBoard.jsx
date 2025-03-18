@@ -243,7 +243,10 @@ function DashBoard() {
     try {
       const response = await fetch(stepFunctionUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.user?.access_token}`,
+        },
         body: JSON.stringify(payload),
       });
       const data = await response.json();
@@ -266,7 +269,10 @@ function DashBoard() {
       try {
         const response = await fetch(stepFunctionUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${auth.user?.access_token}`,
+          },
           body: JSON.stringify({
             executionArn: task.executionArn,
             task_identifier: task.TaskIdentifier,
