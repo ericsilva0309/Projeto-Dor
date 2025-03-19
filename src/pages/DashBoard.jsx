@@ -56,7 +56,7 @@ function DashBoard() {
   }, [tasks]);
 
   function getAuthHeaders() {
-    const token = auth.user?.access_token;
+    const token = auth.user?.id_token;
     return {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
