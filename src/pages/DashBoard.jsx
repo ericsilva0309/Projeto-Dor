@@ -59,6 +59,7 @@ function DashBoard() {
     setLoading(true);
     try {
       const token = auth.user?.access_token;
+      console.log("Token:", token);
       const response = await fetch(lambdaStatusUrl, {
         headers: {
           "Content-Type": "application/json",
