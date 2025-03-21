@@ -55,21 +55,16 @@ function DashBoard() {
     tasksRef.current = tasks;
   }, [tasks]);
 
-  function getAuthHeaders() {
-    const token = auth.user?.id_token;
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-  }
-
   async function fetchTasks() {
     setLoading(true);
     try {
       const token = auth.user?.access_token;
       console.log("Token:", token);
       const response = await fetch(lambdaStatusUrl, {
-        headers: getAuthHeaders(),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await response.json();
       let tasksData =
@@ -123,7 +118,7 @@ function DashBoard() {
     try {
       const response = await fetch(stepFunctionUrl, {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "get_last_status",
           task_identifier: task.TaskIdentifier.toLowerCase(),
@@ -159,7 +154,7 @@ function DashBoard() {
         {
           method: "POST",
           mode: "cors",
-          headers: getAuthHeaders(),
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ taskIdentifier: task.TaskIdentifier }),
         }
       );
@@ -184,7 +179,7 @@ function DashBoard() {
       const response = await fetch(testConnectionLambdaUrl, {
         method: "POST",
         mode: "cors",
-        headers: getAuthHeaders(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error("Erro ao iniciar o teste.");
@@ -208,7 +203,7 @@ function DashBoard() {
       const response = await fetch(testConnectionLambdaUrl, {
         method: "POST",
         mode: "cors",
-        headers: getAuthHeaders(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "check-test",
           task_arn: taskArn,
@@ -255,7 +250,7 @@ function DashBoard() {
     try {
       const response = await fetch(stepFunctionUrl, {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await response.json();
@@ -278,7 +273,7 @@ function DashBoard() {
       try {
         const response = await fetch(stepFunctionUrl, {
           method: "POST",
-          headers: getAuthHeaders(),
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             executionArn: task.executionArn,
             task_identifier: task.TaskIdentifier,
