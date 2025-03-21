@@ -58,14 +58,7 @@ function DashBoard() {
   async function fetchTasks() {
     setLoading(true);
     try {
-      const token = auth.user?.access_token;
-      console.log("Token:", token);
-      const response = await fetch(lambdaStatusUrl, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(lambdaStatusUrl);
       const data = await response.json();
       let tasksData =
         typeof data.body === "string" ? JSON.parse(data.body) : data.body;
