@@ -23,14 +23,15 @@ function DashBoard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 8;
-
   const [loading, setLoading] = useState(true);
 
-  // Estado do modal para teste de conexão
+  // Estado do modal para restart (ou teste de conexão, se for o caso)
+  // taskIndex guarda o índice da task selecionada para restart
   const [statusModal, setStatusModal] = useState({
     isOpen: false,
     currentMessage: "",
     task: null,
+    taskIndex: null,
   });
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -38,7 +39,6 @@ function DashBoard() {
     return storedDarkMode ? JSON.parse(storedDarkMode) : false;
   });
 
-  // Salva a preferência sempre que darkMode mudar
   useEffect(() => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
@@ -72,16 +72,14 @@ function DashBoard() {
           if (task.Status === "failed" || task.Status === "stopped") {
             connectionDisabled = false;
           }
-          let restartDisabled = true; // Por padrão, habilitado para restart
-
-          // Se a Step Function estiver executando, desabilita o botão
+          let restartDisabled = true;
+          // Se a Step Function estiver executando, desabilita o botão de restart
           if (
             stepFnStatus.toLowerCase() === "executando" ||
             stepFnStatus.toLowerCase() === "running"
           ) {
             restartDisabled = true;
           }
-
           // Se o status indicar falha, o botão pode ser habilitado para permitir o restart
           if (stepFnStatus.toLowerCase() === "failed") {
             restartDisabled = true;
@@ -97,7 +95,6 @@ function DashBoard() {
           };
         })
       );
-
       setTasks(updatedTasks);
     } catch (error) {
       alert("Erro ao buscar as tasks.");
@@ -139,6 +136,7 @@ function DashBoard() {
       isOpen: true,
       currentMessage: `Iniciando teste de conexão para a task: ${task.TaskIdentifier}`,
       task,
+      taskIndex,
     });
 
     try {
@@ -151,7 +149,8 @@ function DashBoard() {
           body: JSON.stringify({ taskIdentifier: task.TaskIdentifier }),
         }
       );
-      if (!taskResponse.ok) throw new Error("Erro ao obter detalhes da task.");
+      if (!taskResponse.ok)
+        throw new Error("Erro ao obter detalhes da task.");
       const taskData = await taskResponse.json();
       const taskArn = taskData.ReplicationInstanceArn;
       const endpointArn =
@@ -237,9 +236,26 @@ function DashBoard() {
     updateTask(taskIndex, newProps);
   }
 
-  async function invokeStepFunction(taskIndex) {
+  // Função para abrir o modal para restart, solicitando o nome do usuário
+  function handleRestartClick(taskIndex) {
     const task = tasks[taskIndex];
-    const payload = { task_identifier: task.TaskIdentifier };
+    setStatusModal({
+      isOpen: true,
+      currentMessage: `Informe seu nome para reiniciar a task: ${task.TaskIdentifier}`,
+      task,
+      taskIndex,
+    });
+  }
+
+  // Função chamada pelo modal ao confirmar o restart com o nome informado
+  async function handleRestartConfirm(username) {
+    const { taskIndex } = statusModal;
+    const task = tasks[taskIndex];
+    const payload = {
+      task_identifier: task.TaskIdentifier,
+      updated_by: username,
+    };
+
     try {
       const response = await fetch(stepFunctionUrl, {
         method: "POST",
@@ -250,12 +266,41 @@ function DashBoard() {
       updateTask(taskIndex, {
         stepFunctionStatus: data.executionArn ? "Executando" : "Não acionada",
         executionArn: data.executionArn,
+        updated_by: username,
+      });
+      // Fecha o modal
+      setStatusModal({
+        isOpen: false,
+        currentMessage: "",
+        task: null,
+        taskIndex: null,
       });
     } catch (error) {
       alert("Erro ao invocar a Step Function.");
       console.error(error);
     }
   }
+
+  // Função antiga, não utilizada diretamente no novo fluxo
+  // async function invokeStepFunction(taskIndex) {
+  //   const task = tasks[taskIndex];
+  //   const payload = { task_identifier: task.TaskIdentifier };
+  //   try {
+  //     const response = await fetch(stepFunctionUrl, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(payload),
+  //     });
+  //     const data = await response.json();
+  //     updateTask(taskIndex, {
+  //       stepFunctionStatus: data.executionArn ? "Executando" : "Não acionada",
+  //       executionArn: data.executionArn,
+  //     });
+  //   } catch (error) {
+  //     alert("Erro ao invocar a Step Function.");
+  //     console.error(error);
+  //   }
+  // }
 
   async function checkStepFunctionStatus() {
     const currentTasks = tasksRef.current;
@@ -275,13 +320,9 @@ function DashBoard() {
         const data = await response.json();
         if (data.status) {
           updatedTasks[i].stepFunctionStatus = data.status;
-          // Atualiza restartDisabled com base no novo status
           const statusLower = data.status.toLowerCase();
-          if (statusLower === "running" || statusLower === "executando") {
-            updatedTasks[i].restartDisabled = true;
-          } else {
-            updatedTasks[i].restartDisabled = false;
-          }
+          updatedTasks[i].restartDisabled =
+            statusLower === "running" || statusLower === "executando";
         }
       } catch (error) {
         console.error("Erro ao verificar status da Step Function:", error);
@@ -457,7 +498,6 @@ function DashBoard() {
           </div>
         ) : (
           <>
-            {/* Header modificado para grid */}
             <div className="task-row task-row-header">
               <div className="task-cell task-name">TASKS</div>
               <div className="task-cell">STATUS</div>
@@ -475,8 +515,10 @@ function DashBoard() {
                     isOpen: false,
                     currentMessage: "",
                     task: null,
+                    taskIndex: null,
                   })
                 }
+                onConfirm={handleRestartConfirm}
               />
             )}
             {currentTasks.map((task, index) => (
@@ -489,7 +531,9 @@ function DashBoard() {
                 </div>
                 <div className="task-cell-connection">
                   <button
-                    onClick={() => testConnection(index + indexOfFirstTask)}
+                    onClick={() =>
+                      testConnection(index + indexOfFirstTask)
+                    }
                     disabled={task.connectionDisabled}
                     className={task.connectionClass}
                     aria-label={`Testar conexão para a task ${task.TaskIdentifier}`}
@@ -499,7 +543,9 @@ function DashBoard() {
                 </div>
                 <div className="task-cell-restart">
                   <button
-                    onClick={() => invokeStepFunction(index + indexOfFirstTask)}
+                    onClick={() =>
+                      handleRestartClick(index + indexOfFirstTask)
+                    }
                     disabled={task.restartDisabled}
                     aria-label={`Reiniciar task ${task.TaskIdentifier}`}
                   >
