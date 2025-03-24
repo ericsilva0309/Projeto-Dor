@@ -8,6 +8,7 @@ import {
   MdOutlineKeyboardDoubleArrowRight,
 } from "react-icons/md";
 import TaskStatusModal from "../component/TaskStatusModal";
+import ConfirmationModal from "../component/ConfirmationModal";
 
 const lambdaStatusUrl =
   "https://z6tgt17nud.execute-api.sa-east-1.amazonaws.com/dev/status";
@@ -20,6 +21,9 @@ function DashBoard() {
   const auth = useAuth();
   const [tasks, setTasks] = useState([]);
   const tasksRef = useRef(tasks);
+  const [showRestartModal, setShowRestartModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTaskIndex, setSelectedTaskIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 8;
@@ -239,17 +243,33 @@ function DashBoard() {
 
   async function invokeStepFunction(taskIndex) {
     const task = tasks[taskIndex];
-    const payload = { task_identifier: task.TaskIdentifier };
+    setSelectedTask(task);
+    setSelectedTaskIndex(taskIndex);
+    setShowRestartModal(true);
+  }
+
+  async function handleRestartConfirmation(username) {
+    setShowRestartModal(false);
+    const task = selectedTask;
+    const taskIndex = selectedTaskIndex;
+
     try {
+      const payload = {
+        task_identifier: task.TaskIdentifier,
+        updated_by: username,
+      };
+
       const response = await fetch(stepFunctionUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const data = await response.json();
       updateTask(taskIndex, {
         stepFunctionStatus: data.executionArn ? "Executando" : "Não acionada",
         executionArn: data.executionArn,
+        updated_by: username, // Atualiza o campo no frontend
       });
     } catch (error) {
       alert("Erro ao invocar a Step Function.");
@@ -550,6 +570,14 @@ function DashBoard() {
               {page}
             </button>
           )
+        )}
+        {showRestartModal && (
+          <ConfirmationModal
+            isOpen={showRestartModal}
+            onClose={() => setShowRestartModal(false)}
+            onConfirm={handleRestartConfirmation}
+            taskIdentifier={selectedTask?.TaskIdentifier}
+          />
         )}
         <button
           className="arrow-button"
