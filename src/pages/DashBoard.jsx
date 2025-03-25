@@ -69,7 +69,7 @@ function DashBoard() {
 
       const updatedTasks = await Promise.all(
         tasksData.map(async (task) => {
-          const stepFnStatus = await fetchStepFunctionStatusForTask(task);
+          const stepFnData = await fetchStepFunctionStatusForTask(task);
           let connectionDisabled = true;
           let connectionClass = "btn-gray";
           let connectionText = "Conexão";
@@ -80,24 +80,24 @@ function DashBoard() {
 
           // Se a Step Function estiver executando, desabilita o botão
           if (
-            stepFnStatus.toLowerCase() === "executando" ||
-            stepFnStatus.toLowerCase() === "running"
+            stepFnData.toLowerCase() === "executando" ||
+            stepFnData.toLowerCase() === "running"
           ) {
             restartDisabled = true;
           }
 
           // Se o status indicar falha, o botão pode ser habilitado para permitir o restart
-          if (stepFnStatus.toLowerCase() === "failed") {
+          if (stepFnData.toLowerCase() === "failed") {
             restartDisabled = true;
           }
           return {
             ...task,
-            updated_by: task.updated_by,
+            updated_by: stepFnData.updated_by || "N/A",
             connectionDisabled,
             connectionClass,
             connectionText,
             restartDisabled,
-            stepFunctionStatus: stepFnStatus,
+            stepFunctionStatus: stepFnData,
           };
         })
       );
@@ -249,6 +249,7 @@ function DashBoard() {
   }
 
   async function handleRestartConfirmation(username) {
+    console.log("Username antes de enviar ao Lambda:", username);
     setShowRestartModal(false);
     const task = selectedTask;
     const taskIndex = selectedTaskIndex;
@@ -258,7 +259,7 @@ function DashBoard() {
         task_identifier: task.TaskIdentifier,
         updated_by: username,
       };
-
+      console.log("Payload enviado:", payload)
       const response = await fetch(stepFunctionUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
