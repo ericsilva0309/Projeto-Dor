@@ -125,13 +125,10 @@ function DashBoard() {
         return "Não iniciada";
       }
       const data = await response.json();
-      return {
-        status: data.status || "Desconhecido",
-        updated_by: data.updated_by || "N/A",
-      };
+      return data.status || "Desconhecido";
     } catch (error) {
       console.error("Erro ao buscar status da Step Function:", error);
-      return { status: "Não iniciada", updated_by: "N/A" };
+      return "Não iniciada";
     }
   }
 
@@ -262,7 +259,7 @@ function DashBoard() {
         task_identifier: task.TaskIdentifier,
         updated_by: username,
       };
-      console.log("Payload enviado:", payload);
+      console.log("Payload enviado:", payload)
       const response = await fetch(stepFunctionUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
