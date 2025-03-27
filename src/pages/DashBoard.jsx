@@ -291,6 +291,7 @@ function DashBoard() {
           body: JSON.stringify({
             executionArn: task.executionArn,
             task_identifier: task.TaskIdentifier,
+            updated_by: task.updated_by
           }),
         });
         const data = await response.json();
