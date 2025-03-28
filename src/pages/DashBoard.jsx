@@ -76,18 +76,14 @@ function DashBoard() {
           if (task.Status === "failed" || task.Status === "stopped") {
             connectionDisabled = false;
           }
-          let restartDisabled = true; // Por padrão, habilitado para restart
-
-          // Se a Step Function estiver executando, desabilita o botão
+          let restartDisabled = true;
           if (
-            stepFnData.toLowerCase() === "executando" ||
-            stepFnData.toLowerCase() === "running"
+            stepFnData.status.toLowerCase() === "executando" ||
+            stepFnData.status.toLowerCase() === "running"
           ) {
             restartDisabled = true;
           }
-
-          // Se o status indicar falha, o botão pode ser habilitado para permitir o restart
-          if (stepFnData.toLowerCase() === "failed") {
+          if (stepFnData.status.toLowerCase() === "failed") {
             restartDisabled = true;
           }
           return {
@@ -97,7 +93,7 @@ function DashBoard() {
             connectionClass,
             connectionText,
             restartDisabled,
-            stepFunctionStatus: stepFnData,
+            stepFunctionStatus: stepFnData.status || "Desconhecido",
           };
         })
       );
@@ -122,13 +118,16 @@ function DashBoard() {
         }),
       });
       if (!response.ok) {
-        return "Não iniciada";
+        return { status: "Não iniciada", updated_by: "N/A" };
       }
       const data = await response.json();
-      return data.status || "Desconhecido";
+      return {
+        status: data.status || "Desconhecido",
+        updated_by: data.updated_by || "N/A",
+      };
     } catch (error) {
       console.error("Erro ao buscar status da Step Function:", error);
-      return "Não iniciada";
+      return { status: "Não iniciada", updated_by: "N/A" };
     }
   }
 
@@ -259,7 +258,7 @@ function DashBoard() {
         task_identifier: task.TaskIdentifier,
         updated_by: username,
       };
-      console.log("Payload enviado:", payload)
+      console.log("Payload enviado:", payload);
       const response = await fetch(stepFunctionUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -291,7 +290,7 @@ function DashBoard() {
           body: JSON.stringify({
             executionArn: task.executionArn,
             task_identifier: task.TaskIdentifier,
-            updated_by: task.updated_by
+            updated_by: task.updated_by,
           }),
         });
         const data = await response.json();
